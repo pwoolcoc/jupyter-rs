@@ -1,0 +1,36 @@
+[package]
+name = "jupyter-kernel"
+version = "0.1.0"
+authors = ["Paul Woolcock <paul@woolcock.us>"]
+
+[lib]
+name = "jupyter_kernel"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kernel"
+path = "src/bin/kernel.rs"
+
+[dependencies.zmq]
+version = "^0.7.0"
+
+[dependencies.nom]
+version = "^0.4.0"
+
+[dependencies.serde]
+version = "^0.6.0"
+
+[dependencies.serde_json]
+version = "^0.6.0"
+
+[dependencies.serde_macros]
+version = "^0.5.3"
+
+[dependencies.chan]
+version = "^0.1.14"
+
+[dependencies.log]
+version = "^0.3.2"
+
+[dependencies.env_logger]
+version = "^0.3.1"

@@ -2,6 +2,8 @@ use zmq;
 use std::sync::{Arc, Mutex};
 use std::cell::{RefCell};
 
+use message;
+
 pub struct Shell {
     transport: String,
     addr: String,
@@ -31,7 +33,7 @@ impl Shell {
         loop {
             match router.recv(&mut msg, 0) {
                 Ok(m) => {
-                    let recvd = match msg.as_str() {
+                    match msg.as_str() {
                         Some(m) => {
                             debug!("msg.as_str was {:?}", m);
                         },
@@ -40,7 +42,6 @@ impl Shell {
                             // debug!("when msg was {:?}", msg.msg.unnamed_field1);
                         }
                     };
-                    debug!("shell received {}", msg.as_str().unwrap());
                     debug!("m is {:?}", m);
                 },
                 Err(e) => {

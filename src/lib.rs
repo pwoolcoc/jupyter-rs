@@ -1,6 +1,11 @@
 #![feature(custom_derive, plugin)]
 #![plugin(serde_macros)]
 
+//! Jupyter Kernel for Rust
+//!
+//! This crate implements a kernel backend for the jupyter
+//! notebook system (http:/jupyter.org).
+
 #[macro_use] extern crate nom;
 #[macro_use] extern crate log;
 extern crate env_logger;
@@ -20,6 +25,8 @@ use self::heartbeat::Heartbeat;
 use self::control::Control;
 use self::shell::Shell;
 
+mod raw_message;
+mod message;
 mod heartbeat;
 mod control;
 mod shell;

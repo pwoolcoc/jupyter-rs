@@ -2,6 +2,12 @@
 name = "jupyter-kernel"
 version = "0.1.0"
 authors = ["Paul Woolcock <paul@woolcock.us>"]
+description = """
+Kernel to allow Rust to run in Jupyter (http://jupyter.org) notebooks
+"""
+repository = "https://github.com/pwoolcoc/jupyter-rs"
+homepage = "https://github.com/pwoolcoc/jupyter-rs"
+license = "MIT"
 
 [lib]
 name = "jupyter_kernel"

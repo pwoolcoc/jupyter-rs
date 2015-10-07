@@ -1,6 +1,6 @@
 use zmq;
 use std::sync::{Arc, Mutex};
-use std::cell::{RefCell};
+use std::cell::RefCell;
 
 pub struct Heartbeat {
     transport: String,

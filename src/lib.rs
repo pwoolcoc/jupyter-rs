@@ -6,20 +6,22 @@
 //! This crate implements a kernel backend for the jupyter
 //! notebook system (http:/jupyter.org).
 
-#[macro_use] extern crate nom;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate nom;
+#[macro_use]
+extern crate log;
 extern crate env_logger;
 extern crate zmq;
 extern crate serde;
 extern crate serde_json;
 
-use std::convert::{From};
+use std::convert::From;
 use std::io::{self, Read, Write};
 use std::fmt;
 use std::error::Error as StdError;
 use std::thread;
 use std::sync::{Arc, Mutex};
-use std::cell::{RefCell};
+use std::cell::RefCell;
 
 use self::heartbeat::Heartbeat;
 use self::control::Control;
@@ -99,9 +101,7 @@ pub struct Kernel {
 
 impl Kernel {
     pub fn from_config(config: KernelConfig) -> Kernel {
-        Kernel {
-            config: config,
-        }
+        Kernel { config: config }
     }
 
     pub fn run(&self) -> Result<()> {

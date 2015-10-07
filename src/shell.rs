@@ -1,6 +1,6 @@
 use zmq;
 use std::sync::{Arc, Mutex};
-use std::cell::{RefCell};
+use std::cell::RefCell;
 
 use message;
 
@@ -36,14 +36,14 @@ impl Shell {
                     match msg.as_str() {
                         Some(m) => {
                             debug!("msg.as_str was {:?}", m);
-                        },
+                        }
                         None => {
                             debug!("msg.as_str was none?");
                             // debug!("when msg was {:?}", msg.msg.unnamed_field1);
                         }
                     };
                     debug!("m is {:?}", m);
-                },
+                }
                 Err(e) => {
                     error!("Err(e) was {:?}", e);
                 }
@@ -51,4 +51,3 @@ impl Shell {
         }
     }
 }
-

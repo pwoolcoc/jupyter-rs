@@ -4,7 +4,7 @@ use jupyter_kernel::{Kernel, KernelConfig, Result};
 
 use std::env;
 use std::process;
-use std::fs::{File};
+use std::fs::File;
 use std::io::{self, Write};
 use std::error::Error as StdError;
 
@@ -32,7 +32,7 @@ fn main() {
     match run() {
         Ok(_) => {
             process::exit(0);
-        },
+        }
         Err(e) => {
             err(&format!("error was: {}", e.description()));
             process::exit(255);

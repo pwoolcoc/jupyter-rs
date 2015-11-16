@@ -15,7 +15,7 @@ path = "src/bin/kernel.rs"
 version = "^0.7.0"
 
 [dependencies.nom]
-version = "^0.4.0"
+version = "^1.0.0"
 
 [dependencies.serde]
 version = "^0.6.0"

@@ -74,7 +74,7 @@ impl From<io::Error> for Error {
 
 pub type Result<T> = ::std::result::Result<T, Error>;
 
-#[derive(Debug, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct KernelConfig {
     control_port: u32,
     shell_port: u32,

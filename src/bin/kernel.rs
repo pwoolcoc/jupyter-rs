@@ -16,9 +16,10 @@ fn err(msg: &str) {
 fn run() -> Result<()> {
     let mut args = env::args();
     if args.len() < 1 {
+        err(&format!("Not enough arguments"));
         panic!("Must pass the name of a file that contains config info");
     }
-    let fname = args.nth(1).unwrap();
+    let fname = args.nth(2).unwrap();
     let fh = try!(File::open(fname));
 
     let config = KernelConfig::from_reader(fh).unwrap();

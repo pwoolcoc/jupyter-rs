@@ -24,11 +24,23 @@ impl RawMessage {
             Some(h) => serde_json::from_str(h).unwrap(),
             None => Value::Null,
         };
+        let parent_header: Value = match map.get("parent_header") {
+            Some(h) => serde_json::from_str(h).unwrap(),
+            None => Value::Null,
+        };
+        let metadata: Value = match map.get("metadata") {
+            Some(h) => serde_json::from_str(h).unwrap(),
+            None => Value::Null,
+        };
+        let content: Value = match map.get("content") {
+            Some(h) => serde_json::from_str(h).unwrap(),
+            None => Value::Null,
+        };
         RawMessage {
             header: header,
-            parent_header: Value::Null,
-            metadata: Value::Null,
-            content: Value::Null,
+            parent_header: parent_header,
+            metadata: metadata,
+            content: content,
         }
     }
 

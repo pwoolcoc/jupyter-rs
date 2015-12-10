@@ -37,12 +37,16 @@ mod shell;
 
 #[derive(Debug)]
 pub enum Error {
+    MessageDecodeError(String),
     KernelError(String),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            &Error::MessageDecodeError(ref msg) => {
+                write!(f, "{}", msg)
+            },
             &Error::KernelError(ref msg) => {
                 write!(f, "{}", msg)
             }
@@ -53,6 +57,9 @@ impl fmt::Display for Error {
 impl StdError for Error {
     fn description(&self) -> &str {
         match self {
+            &Error::MessageDecodeError(ref msg) => {
+                msg
+            },
             &Error::KernelError(ref msg) => {
                 msg
             }
@@ -62,7 +69,7 @@ impl StdError for Error {
 
 impl From<serde_json::error::Error> for Error {
     fn from(err: serde_json::error::Error) -> Error {
-        Error::KernelError(err.description().into())
+        Error::MessageDecodeError(err.description().into())
     }
 }
 

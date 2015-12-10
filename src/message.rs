@@ -1,7 +1,8 @@
 use nom::*;
 use std::default::Default;
 
-use raw_message::{RawMessage, Header, Content, Metadata};
+use super::{Result, Error};
+use raw_message::RawMessage;
 
 pub enum Message {
     KernelInfoRequest,
@@ -9,15 +10,15 @@ pub enum Message {
 }
 
 impl Message {
-    pub fn from_raw(msg: RawMessage) -> Message {
+    pub fn from_raw(msg: RawMessage) -> Result<Message> {
         let msg_type = msg.msg_type();
 
         match msg_type.as_ref().map(|s| &s[..]) {
-            Some("kernel_info_request") => Message::KernelInfoRequest,
-            Some("kernel_info_reply") => Message::KernelInfoReply(Default::default()),
-            Some(m) => panic!("Unknown message type {}", m),
-            None => panic!("Malformed message; Messages are expected to have a msg_type in their \
-                            header"),
+            Some("kernel_info_request") => Ok(Message::KernelInfoRequest),
+            Some("kernel_info_reply") => Ok(Message::KernelInfoReply(Default::default())),
+            Some(m) => Err(Error::MessageDecodeError(format!("Unknown message type {}", m))),
+            None => Err(Error::MessageDecodeError(format!("Malformed message; Messages are expected to have a msg_type in their \
+                            header"))),
         }
     }
 
@@ -50,7 +51,7 @@ impl Default for KernelInfoReply {
 
 // Helper structs
 
-struct LanguageInfo {
+pub struct LanguageInfo {
     name: String,
     version: String,
     mimetype: String,
@@ -74,7 +75,7 @@ impl Default for LanguageInfo {
     }
 }
 
-struct HelpLinks {
+pub struct HelpLinks {
     text: String,
     url: String,
 }

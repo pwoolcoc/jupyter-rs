@@ -1,36 +1,52 @@
 use std::default::Default;
 
 use nom::*;
-// use serde::{Serialize, Deserialize};
-// use serde_json;
+use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
+use serde_json;
+use serde_json::Value;
 
-pub struct Header {
-    msg_type: Option<String>,
-}
-
-pub struct Metadata;
-pub struct Content;
 
 pub struct RawMessage {
-    header: Header,
-    parent_header: Header,
-    metadata: Metadata,
-    content: Content,
+    header: Value,
+    parent_header: Value,
+    metadata: Value,
+    content: Value,
 }
 
 impl RawMessage {
+    pub fn new() -> RawMessage {
+        Default::default()
+    }
+
+    pub fn from_map(map: HashMap<String, String>) -> RawMessage {
+        let header: Value = match map.get("header") {
+            Some(h) => serde_json::from_str(h).unwrap(),
+            None => Value::Null,
+        };
+        RawMessage {
+            header: header,
+            parent_header: Value::Null,
+            metadata: Value::Null,
+            content: Value::Null,
+        }
+    }
+
     pub fn msg_type(&self) -> Option<&str> {
-        self.header.msg_type.as_ref().map(|s| &s[..])
+        self.header.as_object()
+                   .and_then(|obj| obj.get("msg_type"))
+                   .and_then(|m| m.as_string())
+                   .map(|s| &s[..])
     }
 }
 
 impl Default for RawMessage {
     fn default() -> RawMessage {
         RawMessage {
-            header: Header { msg_type: None },
-            parent_header: Header { msg_type: None },
-            content: Content,
-            metadata: Metadata,
+            header: Value::Null,
+            parent_header: Value::Null,
+            metadata: Value::Null,
+            content: Value::Null,
         }
     }
 }

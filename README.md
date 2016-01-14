@@ -1,3 +1,5 @@
+**THIS IS CURRENTLY BEING DEVELOPED, BUT IS NOT FUNCTIONAL YET**
+
 # Jupyter backend for Rust
 
 # Getting Started

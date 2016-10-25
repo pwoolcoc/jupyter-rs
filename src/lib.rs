@@ -1,5 +1,4 @@
-#![feature(custom_derive, plugin)]
-#![plugin(serde_macros)]
+#![feature(proc_macro)]
 
 //! Jupyter Kernel for Rust
 //!
@@ -14,6 +13,8 @@ extern crate env_logger;
 extern crate zmq;
 extern crate serde;
 extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
 
 use std::convert::From;
 use std::io::{self, Read, Write};

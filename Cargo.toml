@@ -1,43 +1,28 @@
 [package]
-name = "jupyter-kernel"
-version = "0.1.0"
 authors = ["Paul Woolcock <paul@woolcock.us>"]
-description = """
-Kernel to allow Rust to run in Jupyter (http://jupyter.org) notebooks
-"""
-repository = "https://github.com/pwoolcoc/jupyter-rs"
+description = "Kernel to allow Rust to run in Jupyter (http://jupyter.org) notebooks\n"
 homepage = "https://github.com/pwoolcoc/jupyter-rs"
 license = "MIT"
-
-[lib]
-name = "jupyter_kernel"
-path = "src/lib.rs"
+name = "jupyter-kernel"
+repository = "https://github.com/pwoolcoc/jupyter-rs"
+version = "0.1.0"
 
 [[bin]]
 name = "jupyter-rust"
 path = "src/bin/kernel.rs"
 
+[dependencies]
+chan = "0.1.18"
+env_logger = "0.3.5"
+log = "0.3.6"
+nom = "1.2.4"
+serde = "0.8.16"
+serde_derive = "0.8.16"
+serde_json = "0.8.3"
+
 [dependencies.zmq]
 git = "https://github.com/erickt/rust-zmq"
-# version = "~0.7.0"
 
-[dependencies.nom]
-version = "~1.0.0"
-
-[dependencies.serde]
-version = "~0.6.6"
-
-[dependencies.serde_json]
-version = "~0.6.0"
-
-[dependencies.serde_macros]
-version = "~0.6.5"
-
-[dependencies.chan]
-version = "~0.1.14"
-
-[dependencies.log]
-version = "~0.3.4"
-
-[dependencies.env_logger]
-version = "~0.3.2"
+[lib]
+name = "jupyter_kernel"
+path = "src/lib.rs"

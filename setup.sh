@@ -1,7 +1,7 @@
 #!/bin/bash
 
 JUPYTER=$(which jupyter)
-KERNEL=$(which jupyter-rust)
+KERNEL=${1:-$PWD/target/debug/jupyter-rust}
 
 if [[ -z "$JUPYTER" ]] ; then
     echo "jupyter not found"

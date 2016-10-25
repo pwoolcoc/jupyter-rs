@@ -13,5 +13,9 @@ if [[ -z "$KERNEL" ]] ; then
     exit 255
 fi
 
-$JUPYTER kernelspec install --user --debug --name=rust ./kernelspec
+mkdir -p /tmp/kernelspec
+ESCAPED=$(echo "$KERNEL" | sed -e 's/\//\\\//g')
+sed -e "s/KERNEL/$ESCAPED/" ./kernelspec/kernel.json > /tmp/kernelspec/kernel.json
+
+$JUPYTER kernelspec install --user --debug --name=rust /tmp/kernelspec
 

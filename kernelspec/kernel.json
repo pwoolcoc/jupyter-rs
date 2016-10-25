@@ -1,5 +1,5 @@
 {
-    "argv": ["jupyter-rust", "-f", "{connection_file}"],
+    "argv": ["KERNEL", "-f", "{connection_file}"],
     "display_name": "Rust",
     "language": "rust"
 }

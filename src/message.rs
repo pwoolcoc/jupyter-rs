@@ -8,6 +8,8 @@ use errors::*;
 pub enum Content {
     KernelInfoRequest,
     KernelInfoReply(KernelInfoReply),
+    CommOpenRequest,
+    CommOpenReply,
 }
 
 pub struct Metadata;
@@ -28,7 +30,7 @@ macro_rules! opt_res {
                 val
             },
             None => {
-                return Err(ErrorKind::ParseMsgError.into())
+                return Err(ErrorKind::EmptyMsgError.into())
             }
         }
     }}
@@ -55,14 +57,13 @@ impl Message {
 
         let identity = msg(router)?;
         let identity = identity.as_str().unwrap_or("");
-        debug!("identity is {:?}", &identity);
 
-        debug!("Getting delim");
         let delim = msg(router)?;
         let delim = delim.as_str();
         let delim = opt_res!(delim);
         if delim != "<IDS|MSG>" {
-            return Err(ErrorKind::ParseMsgError.into());
+            return Err(ErrorKind::ParseMsgError(
+                        format!("Expected delimiter <IDS|MSG>, got {}", delim)).into());
         }
 
         let hmac = msg(router)?;
@@ -83,7 +84,6 @@ impl Message {
         let content = Message::parse_content(&header, content.as_str())?;
 
         debug!("msg_type: {:?}", header.as_ref().map(|h| h.msg_type));
-        debug!("DONE");
         Ok(Message {
             identity: identity.into(),
             hmac: hmac.into(),
@@ -97,7 +97,7 @@ impl Message {
     fn parse_content(header: &Option<Header>, content: Option<&str>) -> Result<Option<Content>> {
         if let &Some(ref header) = header {
             let msg_type = header.msg_type;
-            Ok(Some(Content::KernelInfoRequest))
+            msg_type.parse(content)
         } else{
             Ok(None)
         }

@@ -18,21 +18,23 @@ extern crate serde_json;
 use std::io::Read;
 use std::thread;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::channel;
 use std::cell::RefCell;
 
 use errors::*;
 use heartbeat::Heartbeat;
-use control::Control;
 use shell::Shell;
+use iopub::Iopub;
 
 pub mod errors;
 mod msg_type;
 mod message;
 mod heartbeat;
-mod control;
 mod shell;
-// mod iopub;
+mod status;
+mod iopub;
 // mod stdin;
+mod messages;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KernelConfig {
@@ -95,6 +97,7 @@ impl Kernel {
         let transport = self.config.transport.clone();
         let ip = self.config.ip.clone();
 
+        let (tx, rx) = channel();
         let ctx = Arc::new(Mutex::new(RefCell::new(zmq::Context::new())));
         let mut threads = vec![];
 
@@ -102,13 +105,18 @@ impl Kernel {
         let hb_ctx = ctx.clone();
         threads.push(thread::spawn(move || hb.listen(hb_ctx)));
 
-        let ctrl = Control::new(&transport, &ip, self.config.control_port);
+        // Control is the same as shell
+        let ctrl = Shell::new(&transport, &ip, tx.clone(), Ports::from(&self.config));
         let ctrl_ctx = ctx.clone();
         threads.push(thread::spawn(move || ctrl.listen(ctrl_ctx)));
 
-        let shell = Shell::new(&transport, &ip, Ports::from(&self.config));
+        let shell = Shell::new(&transport, &ip, tx.clone(), Ports::from(&self.config));
         let shell_ctx = ctx.clone();
         threads.push(thread::spawn(move || shell.listen(shell_ctx)));
+
+        let iopub = Iopub::new(&transport, &ip, rx, self.config.iopub_port);
+        let iopub_ctx = ctx.clone();
+        threads.push(thread::spawn(move || iopub.listen(iopub_ctx)));
 
         for thread in threads {
             let _ = thread.join();

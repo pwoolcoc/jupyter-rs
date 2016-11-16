@@ -19,20 +19,20 @@ impl Heartbeat {
 
     pub fn listen(&self, ctx: Arc<Mutex<RefCell<zmq::Context>>>) { // Result?
         let mut responder = {
-            let ctx = ctx.lock().unwrap();
+            let ctx = ctx.lock().expect("Could not get a lock on the zmq Context");
             let mut ctx = ctx.borrow_mut();
-            ctx.socket(zmq::REP).unwrap()
+            ctx.socket(zmq::REP).expect("Could not create heartbeat socket")
         };
         let address = format!("{}://{}:{}", &self.transport, &self.addr, self.port);
 
         debug!("heartbeat address is {}", address);
         assert!(responder.bind(&address).is_ok());
-        let mut msg = zmq::Message::new().unwrap();
+        let mut msg = zmq::Message::new().expect("Could not create new zmq Message");
         loop {
-            responder.recv(&mut msg, 0).unwrap();
-            let recvd = msg.as_str().unwrap();
-            debug!("Heartbeat Received '{}'", recvd);
-            responder.send_str(recvd, 0).unwrap();
+            responder.recv(&mut msg, 0).expect("got an Err on the heartbeat responder.recv");
+            let recvd = msg.as_str().expect("Msg from heartbeat message was empty");
+            debug!("heartbeat received '{}'", recvd);
+            responder.send_str(recvd, 0).expect("Could not send ping back");
         }
     }
 }

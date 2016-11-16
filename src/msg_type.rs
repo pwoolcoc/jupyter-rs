@@ -1,3 +1,7 @@
+use message::Content;
+use messages;
+use errors;
+
 macro_rules! enum_str {
     ($name:ident { $($variant:ident($str:expr), )* }) => {
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -48,3 +52,12 @@ enum_str!(MsgType {
     KernelInfoRequest("kernel_info_request"),
     CommOpen("comm_open"),
 });
+
+impl MsgType {
+    pub fn parse(&self, content: Option<&str>) -> errors::Result<Option<Content>> {
+        match *self {
+            MsgType::KernelInfoRequest => Ok(None),
+            MsgType::CommOpen => messages::comm_open::parse(content),
+        }
+    }
+}

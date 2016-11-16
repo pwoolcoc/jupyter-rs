@@ -1,7 +1,9 @@
 use zmq;
 use std::sync::{Arc, Mutex};
 use std::cell::RefCell;
+use std::sync::mpsc::{channel, Sender};
 
+use status::Status;
 use message::Message;
 use Ports;
 
@@ -9,14 +11,16 @@ pub struct Shell {
     transport: String,
     addr: String,
     ports: Ports,
+    to_iopub: Sender<Status>,
 }
 
 impl Shell {
-    pub fn new(tns: &str, addr: &str, ports: Ports) -> Shell {
+    pub fn new(tns: &str, addr: &str, to_iopub: Sender<Status>, ports: Ports) -> Shell {
         Shell {
             transport: tns.into(),
             addr: addr.into(),
             ports: ports,
+            to_iopub: to_iopub,
         }
     }
 

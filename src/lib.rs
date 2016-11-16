@@ -25,10 +25,9 @@ use heartbeat::Heartbeat;
 use control::Control;
 use shell::Shell;
 
-// mod message;
 pub mod errors;
 mod msg_type;
-mod raw_message;
+mod message;
 mod heartbeat;
 mod control;
 mod shell;
@@ -37,15 +36,35 @@ mod shell;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KernelConfig {
-    control_port: u32,
-    shell_port: u32,
+    pub control_port: u32,
+    pub shell_port: u32,
     transport: String,
     signature_scheme: String,
-    stdin_port: u32,
-    hb_port: u32,
+    pub stdin_port: u32,
+    pub hb_port: u32,
     ip: String,
-    iopub_port: u32,
+    pub iopub_port: u32,
     key: String,
+}
+
+pub struct Ports {
+    pub control_port: u32,
+    pub shell_port: u32,
+    pub stdin_port: u32,
+    pub hb_port: u32,
+    pub iopub_port: u32,
+}
+
+impl<'a> From<&'a KernelConfig> for Ports {
+    fn from(k: &KernelConfig) -> Ports {
+        Ports {
+            control_port: k.control_port,
+            shell_port: k.shell_port,
+            stdin_port: k.stdin_port,
+            hb_port: k.hb_port,
+            iopub_port: k.iopub_port,
+        }
+    }
 }
 
 impl KernelConfig {
@@ -87,7 +106,7 @@ impl Kernel {
         let ctrl_ctx = ctx.clone();
         threads.push(thread::spawn(move || ctrl.listen(ctrl_ctx)));
 
-        let shell = Shell::new(&transport, &ip, self.config.shell_port);
+        let shell = Shell::new(&transport, &ip, Ports::from(&self.config));
         let shell_ctx = ctx.clone();
         threads.push(thread::spawn(move || shell.listen(shell_ctx)));
 

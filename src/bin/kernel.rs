@@ -1,6 +1,7 @@
 extern crate jupyter_kernel;
 
-use jupyter_kernel::{Kernel, KernelConfig, Result};
+use jupyter_kernel::{Kernel};
+use jupyter_kernel::errors::Result;
 
 use std::env;
 use std::process;
@@ -20,23 +21,16 @@ fn run() -> Result<()> {
         panic!("Must pass the name of a file that contains config info");
     }
     let fname = args.nth(2).unwrap();
-    let fh = try!(File::open(fname));
+    let fh = File::open(fname)?;
 
-    let config = KernelConfig::from_reader(fh).unwrap();
-
-    let kernel = Kernel::from_config(config);
+    let kernel = Kernel::from_reader(fh)?;
 
     kernel.run()
 }
 
 fn main() {
-    match run() {
-        Ok(_) => {
-            process::exit(0);
-        }
-        Err(e) => {
-            err(&format!("error was: {}", e.description()));
-            process::exit(255);
-        }
+    if let Err(e) = run() {
+        err(&format!("error was: {}", e.description()));
+        process::exit(255);
     }
 }

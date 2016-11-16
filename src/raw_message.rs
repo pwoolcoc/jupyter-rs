@@ -1,36 +1,49 @@
-use std::default::Default;
+use std::collections::HashMap;
+use serde_json;
+use serde_json::Value;
 
-use nom::*;
-// use serde::{Serialize, Deserialize};
-// use serde_json;
+use msg_type::MsgType;
 
-pub struct Header {
-    msg_type: Option<String>,
+#[derive(Serialize, Deserialize)]
+pub struct RawMessage {
+    header: Option<Header>,
+    parent_header: Option<Header>,
+    metadata: Value,
+    content: Value,
 }
 
-pub struct Metadata;
-pub struct Content;
-
-pub struct RawMessage {
-    header: Header,
-    parent_header: Header,
-    metadata: Metadata,
-    content: Content,
+#[derive(Serialize, Deserialize)]
+pub struct Header {
+    msg_id: String,
+    username: String,
+    session: String,
+    pub msg_type: MsgType,
+    version: String,
 }
 
 impl RawMessage {
-    pub fn msg_type(&self) -> Option<&str> {
-        self.header.msg_type.as_ref().map(|s| &s[..])
-    }
-}
-
-impl Default for RawMessage {
-    fn default() -> RawMessage {
+    pub fn from_map(map: HashMap<String, String>) -> RawMessage {
+        let header: Option<Header> = match map.get("header") {
+            Some(h) => serde_json::from_str(h).ok(),
+            None => None,
+        };
+        let parent_header: Option<Header> = match map.get("parent_header") {
+            Some(h) => serde_json::from_str(h).ok(),
+            None => None,
+        };
+        let metadata: Value = match map.get("metadata") {
+            Some(h) => serde_json::from_str(h).unwrap(),
+            None => Value::Null,
+        };
+        let content: Value = match map.get("content") {
+            Some(h) => serde_json::from_str(h).unwrap(),
+            None => Value::Null,
+        };
         RawMessage {
-            header: Header { msg_type: None },
-            parent_header: Header { msg_type: None },
-            content: Content,
-            metadata: Metadata,
+            header: header,
+            parent_header: parent_header,
+            metadata: metadata,
+            content: content,
         }
     }
 }

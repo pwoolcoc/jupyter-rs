@@ -1,79 +1,39 @@
 #![feature(proc_macro)]
+#![recursion_limit = "1024"]
 
 //! Jupyter Kernel for Rust
 //!
 //! This crate implements a kernel backend for the jupyter
 //! notebook system (http:/jupyter.org).
 
-#[macro_use]
-extern crate nom;
-#[macro_use]
-extern crate log;
+#[macro_use] extern crate nom;
+#[macro_use] extern crate log;
+#[macro_use] extern crate serde_derive;
+#[macro_use] extern crate error_chain;
 extern crate env_logger;
 extern crate zmq;
 extern crate serde;
 extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
 
-use std::convert::From;
-use std::io::{self, Read, Write};
-use std::fmt;
-use std::error::Error as StdError;
+use std::io::Read;
 use std::thread;
 use std::sync::{Arc, Mutex};
 use std::cell::RefCell;
 
-use self::heartbeat::Heartbeat;
-use self::control::Control;
-use self::shell::Shell;
+use errors::*;
+use heartbeat::Heartbeat;
+use control::Control;
+use shell::Shell;
 
+// mod message;
+pub mod errors;
+mod msg_type;
 mod raw_message;
-mod message;
 mod heartbeat;
 mod control;
 mod shell;
 // mod iopub;
 // mod stdin;
-
-#[derive(Debug)]
-pub enum Error {
-    KernelError(String),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Error::KernelError(ref msg) => {
-                write!(f, "{}", msg)
-            }
-        }
-    }
-}
-
-impl StdError for Error {
-    fn description(&self) -> &str {
-        match self {
-            &Error::KernelError(ref msg) => {
-                msg
-            }
-        }
-    }
-}
-
-impl From<serde_json::error::Error> for Error {
-    fn from(err: serde_json::error::Error) -> Error {
-        Error::KernelError(err.description().into())
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Error {
-        Error::KernelError(err.description().into())
-    }
-}
-
-pub type Result<T> = ::std::result::Result<T, Error>;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KernelConfig {
@@ -101,6 +61,11 @@ pub struct Kernel {
 }
 
 impl Kernel {
+    pub fn from_reader<R: Read>(r: R) -> Result<Kernel> {
+        let config = try!(KernelConfig::from_reader(r));
+        Ok(Kernel::from_config(config))
+    }
+
     pub fn from_config(config: KernelConfig) -> Kernel {
         Kernel { config: config }
     }

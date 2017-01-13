@@ -56,7 +56,7 @@ enum_str!(MsgType {
 impl MsgType {
     pub fn parse(&self, content: Option<&str>) -> errors::Result<Option<Content>> {
         match *self {
-            MsgType::KernelInfoRequest => Ok(None),
+            MsgType::KernelInfoRequest => Ok(Some(Content::KernelInfoRequest)),
             MsgType::CommOpen => messages::comm_open::parse(content),
         }
     }

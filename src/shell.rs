@@ -1,4 +1,5 @@
 use zmq;
+use serde_json;
 use std::sync::{Arc, Mutex};
 use std::cell::RefCell;
 use std::sync::mpsc::{channel, Sender};
@@ -35,7 +36,24 @@ impl Shell {
         debug!("shell address is {}", &address);
         assert!(router.bind(&address).is_ok());
         loop {
-            let message = Message::from_socket(&mut router).expect("Could not get message");
+            let message = match Message::from_socket(&mut router) {
+                Ok(m) => m,
+                Err(e) => {
+                    error!("Error in message!");
+                    continue;
+                },
+            };
+            let reply = match message.reply() {
+                Ok(m) => m,
+                Err(e) => {
+                    error!("Error in reply!");
+                    continue;
+                },
+            };
+            let reply = reply.to_json();
+            let reply = serde_json::to_string(&reply).unwrap();
+            debug!("reply is {:?}", &reply);
+            router.send_str(&reply, 0);
             // handle message
         }
     }

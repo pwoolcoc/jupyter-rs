@@ -1,15 +1,23 @@
 use zmq;
 use serde_json;
+use serde_json::builder::ObjectBuilder;
 use std::default::Default;
 
 use msg_type::MsgType;
 use errors::*;
 
+#[derive(Debug, Serialize, PartialEq)]
 pub enum Content {
     KernelInfoRequest,
     KernelInfoReply(KernelInfoReply),
     CommOpenRequest,
     CommOpenReply,
+}
+
+impl Content {
+    pub fn reply(&self) -> Result<Content> {
+        Ok(Content::KernelInfoReply(Default::default()))
+    }
 }
 
 pub struct Metadata;
@@ -84,6 +92,8 @@ impl Message {
         let content = Message::parse_content(&header, content.as_str())?;
 
         debug!("msg_type: {:?}", header.as_ref().map(|h| h.msg_type));
+        debug!("content: {:?}", content.as_ref());
+        debug!("hmac: {:?}", &hmac);
         Ok(Message {
             identity: identity.into(),
             hmac: hmac.into(),
@@ -102,60 +112,110 @@ impl Message {
             Ok(None)
         }
     }
+
+    pub fn reply(&self) -> Result<Reply> {
+        Ok(Reply::KernelInfoReply(Default::default()))
+    }
 }
 
-#[derive(Serialize)]
+#[derive(Debug, PartialEq)]
+pub enum Reply {
+    KernelInfoReply(KernelInfoReply),
+}
+
+impl Reply {
+    pub fn to_json(self) -> serde_json::Value {
+        match self {
+            Reply::KernelInfoReply(k) => {
+                let objs: Vec<serde_json::Value> = k.help_links.iter().map(|h| {
+                    ObjectBuilder::new().insert("text", h.text.clone())
+                                        .insert("url", h.url.clone())
+                                        .build()
+                }).collect();
+
+                ObjectBuilder::new()
+                                .insert("status", "ok")
+                                .insert("protocol_version", k.protocol_version.clone())
+                                .insert("implementation", k.implementation.clone())
+                                .insert("implementation_version", k.implementation_version.clone())
+                                .insert_object("language_info", |o| {
+                                    o.insert("name", k.language_info.name.clone())
+                                     .insert("version", k.language_info.version.clone())
+                                     .insert("mimetype", k.language_info.mimetype.clone())
+                                     .insert("file_extension", k.language_info.file_extension.clone())
+                                     .insert("pygments_lexer", k.language_info.pygments_lexer.clone())
+                                     .insert("codemirror_mode", k.language_info.codemirror_mode.clone())
+                                     .insert("nbconvert_exporter", k.language_info.nbconvert_exporter.clone())
+                                })
+                                .insert("banner", k.banner.clone())
+                                .insert("help_links", objs)
+                                .build()
+            },
+        }
+    }
+}
+
+#[derive(Serialize, Debug, PartialEq)]
 pub struct KernelInfoReply {
-    protocol_version: String,
-    implementation: String,
-    implementation_version: String,
-    language_info: LanguageInfo,
-    banner: String,
-    help_links: Vec<HelpLinks>,
+    pub protocol_version: String,
+    pub implementation: String,
+    pub implementation_version: String,
+    pub language_info: LanguageInfo,
+    pub banner: String,
+    pub help_links: Vec<HelpLinks>,
 }
 
 impl Default for KernelInfoReply {
     fn default() -> KernelInfoReply {
         KernelInfoReply {
-            protocol_version: "".into(),
-            implementation: "".into(),
-            implementation_version: "".into(),
+            protocol_version: "5.1".into(),
+            implementation: "rust".into(),
+            implementation_version: "0.1.0".into(),
             language_info: Default::default(),
-            banner: "".into(),
-            help_links: vec![],
+            banner: "Welcome to rust!".into(),
+            help_links: vec!["https://doc.rust-lang.org".into()],
         }
     }
 }
 
 // Helper structs
 
-#[derive(Serialize)]
-struct LanguageInfo {
-    name: String,
-    version: String,
-    mimetype: String,
-    file_extension: String,
-    pygments_lexer: String,
-    codemirror_mode: String,
-    nbconvert_exporter: String,
+#[derive(Serialize, Debug, PartialEq)]
+pub struct LanguageInfo {
+    pub name: String,
+    pub version: String,
+    pub mimetype: String,
+    pub file_extension: String,
+    pub pygments_lexer: String,
+    pub codemirror_mode: String,
+    pub nbconvert_exporter: String,
 }
 
 impl Default for LanguageInfo {
     fn default() -> LanguageInfo {
         LanguageInfo {
-            name: "".into(),
-            version: "".into(),
-            mimetype: "".into(),
-            file_extension: "".into(),
-            pygments_lexer: "".into(),
-            codemirror_mode: "".into(),
+            name: "rust".into(),
+            version: "1.14.0-nightly".into(),
+            mimetype: "application/rust".into(),
+            file_extension: "rs".into(),
+            pygments_lexer: "rust".into(),
+            codemirror_mode: "rust".into(),
             nbconvert_exporter: "".into(),
         }
     }
 }
 
-#[derive(Serialize)]
-struct HelpLinks {
-    text: String,
-    url: String,
+#[derive(Serialize, Debug, PartialEq)]
+pub struct HelpLinks {
+    pub text: String,
+    pub url: String,
+}
+
+impl<'a> From<&'a str> for HelpLinks {
+    fn from(s: &'a str) -> HelpLinks {
+        HelpLinks {
+            text: s.into(),
+            url: s.into(),
+        }
+    }
 }

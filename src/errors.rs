@@ -10,6 +10,7 @@ error_chain!{
     }
 
     errors {
+        UnknownMessageError
         EmptyMsgError
         ParseMsgError(t: String)
         KernelError(t: String)

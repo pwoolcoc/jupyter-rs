@@ -1,6 +1,6 @@
 [package]
 authors = ["Paul Woolcock <paul@woolcock.us>"]
-description = "Kernel to allow Rust to run in Jupyter (http://jupyter.org) notebooks\n"
+description = "Kernel to allow Rust to run in Jupyter (http://jupyter.org) notebooks"
 homepage = "https://github.com/pwoolcoc/jupyter-rs"
 license = "MIT"
 name = "jupyter-kernel"
@@ -15,15 +15,21 @@ path = "src/bin/kernel.rs"
 chan = "0.1.18"
 env_logger = "0.3.5"
 error-chain = "0.5.0"
+futures = "0.1.13"
 log = "0.3.6"
 nom = "1.2.4"
 rust-crypto = "0.2.36"
 serde = "0.8.16"
 serde_derive = "0.8.17"
 serde_json = "0.8.3"
+tokio-core = "0.1.3"
 
 [dependencies.zmq]
 git = "https://github.com/erickt/rust-zmq"
+
+[dependencies.zmq-tokio]
+path = "/home/paul/code/zmq-tokio"
+# git = "https://github.com/rotty/zmq-tokio"
 
 [lib]
 name = "jupyter_kernel"

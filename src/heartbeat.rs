@@ -1,6 +1,11 @@
-use zmq;
 use std::sync::{Arc, Mutex};
 use std::cell::RefCell;
+
+use zmq;
+use tokio_core::reactor::Handle;
+use zmq_tokio::{Context, Socket};
+use futures::{Future, Sink, Stream};
+use futures::future::{BoxFuture};
 
 pub struct Heartbeat {
     transport: String,
@@ -17,22 +22,31 @@ impl Heartbeat {
         }
     }
 
-    pub fn listen(&self, ctx: Arc<Mutex<RefCell<zmq::Context>>>) { // Result?
+    fn echo(&self, rep: Socket) -> BoxFuture<(), ()> {
+        trace!("entering echo server");
+        let (responses, requests) = rep.framed().split();
+        requests.fold(responses, |responses, mut request| {
+                let mut part0 = None;
+                for part in request.drain(0..1) {
+                    part0 = Some(part);
+                    break;
+                }
+                let p = part0.unwrap();
+                trace!("got message '{}'", String::from_utf8_lossy(&p));
+                responses.send(p)
+        }).map(|_| {}).then(|_| Ok(())).boxed()
+    }
+
+    pub fn listen(&self, handle: &Handle, ctx: Arc<Mutex<RefCell<Context>>>) -> BoxFuture<(), ()> { 
         let mut responder = {
             let ctx = ctx.lock().expect("Could not get a lock on the zmq Context");
-            let mut ctx = ctx.borrow_mut();
-            ctx.socket(zmq::REP).expect("Could not create heartbeat socket")
+            let ctx = ctx.borrow();
+            ctx.socket(zmq::REP, &handle).expect("Could not create heartbeat socket")
         };
         let address = format!("{}://{}:{}", &self.transport, &self.addr, self.port);
 
         debug!("heartbeat address is {}", address);
         assert!(responder.bind(&address).is_ok());
-        let mut msg = zmq::Message::new().expect("Could not create new zmq Message");
-        loop {
-            responder.recv(&mut msg, 0).expect("got an Err on the heartbeat responder.recv");
-            let recvd = msg.as_str().expect("Msg from heartbeat message was empty");
-            debug!("heartbeat received '{}'", recvd);
-            responder.send_str(recvd, 0).expect("Could not send ping back");
-        }
+        self.echo(responder)
     }
 }

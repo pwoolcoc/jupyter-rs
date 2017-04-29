@@ -7,15 +7,15 @@ use zmq_tokio::{Context, Socket};
 use futures::{Future, Sink, Stream};
 use futures::future::{BoxFuture};
 
-pub struct Stdin {
+pub struct Control {
     transport: String,
     addr: String,
     port: u32,
 }
 
-impl Stdin {
-    pub fn new(transport: &str, addr: &str, port: u32) -> Stdin {
-        Stdin {
+impl Control {
+    pub fn new(transport: &str, addr: &str, port: u32) -> Control {
+        Control {
             transport: transport.into(),
             addr: addr.into(),
             port: port,
@@ -45,7 +45,7 @@ impl Stdin {
         };
         let address = format!("{}://{}:{}", &self.transport, &self.addr, self.port);
 
-        debug!("stdin address is {}", address);
+        debug!("control address is {}", address);
         assert!(responder.bind(&address).is_ok());
         self.echo(responder)
     }

@@ -1,7 +1,7 @@
 {
     "argv": ["KERNEL", "-f", "{connection_file}"],
     "env": {
-        "RUST_LOG": "jupyter_kernel=debug"
+        "RUST_LOG": "jupyter_kernel=trace"
     },
     "display_name": "Rust",
     "language": "rust"

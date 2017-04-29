@@ -6,36 +6,39 @@
 //! This crate implements a kernel backend for the jupyter
 //! notebook system (http:/jupyter.org).
 
-#[macro_use] extern crate nom;
 #[macro_use] extern crate log;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate error_chain;
-extern crate env_logger;
+extern crate tokio_core;
 extern crate zmq;
+extern crate env_logger;
 extern crate serde;
 extern crate serde_json;
+extern crate zmq_tokio;
+extern crate futures;
 
-use std::io::Read;
-use std::thread;
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::channel;
 use std::cell::RefCell;
+use std::io::Read;
+use tokio_core::reactor::Core;
+use zmq_tokio::Context;
 
 use errors::*;
 use heartbeat::Heartbeat;
 use shell::Shell;
+use control::Control;
+use stdin::Stdin;
 use iopub::Iopub;
 
 pub mod errors;
-mod msg_type;
-mod message;
 mod heartbeat;
 mod shell;
-mod status;
+mod control;
+mod stdin;
 mod iopub;
-// mod stdin;
-mod messages;
 
+/// Represents the JSON structure that the jupyter
+/// application passes us when it initializes the kernel
 #[derive(Serialize, Deserialize, Debug)]
 pub struct KernelConfig {
     pub control_port: u32,
@@ -49,26 +52,6 @@ pub struct KernelConfig {
     key: String,
 }
 
-pub struct Ports {
-    pub control_port: u32,
-    pub shell_port: u32,
-    pub stdin_port: u32,
-    pub hb_port: u32,
-    pub iopub_port: u32,
-}
-
-impl<'a> From<&'a KernelConfig> for Ports {
-    fn from(k: &KernelConfig) -> Ports {
-        Ports {
-            control_port: k.control_port,
-            shell_port: k.shell_port,
-            stdin_port: k.stdin_port,
-            hb_port: k.hb_port,
-            iopub_port: k.iopub_port,
-        }
-    }
-}
-
 impl KernelConfig {
     pub fn from_reader<R: Read>(r: R) -> Result<KernelConfig> {
         let config: KernelConfig = try!(serde_json::from_reader(r));
@@ -76,7 +59,6 @@ impl KernelConfig {
     }
 }
 
-#[derive(Debug)]
 pub struct Kernel {
     config: KernelConfig,
 }
@@ -94,32 +76,29 @@ impl Kernel {
     pub fn run(&self) -> Result<()> {
         env_logger::init().unwrap();
         debug!("Using config: {:?}", &self.config);
-        let transport = self.config.transport.clone();
-        let ip = self.config.ip.clone();
 
-        let (tx, rx) = channel();
-        let ctx = Arc::new(Mutex::new(RefCell::new(zmq::Context::new())));
-        let mut threads = vec![];
+        let mut l = Core::new().unwrap();
+        let handle = l.handle();
 
-        let hb = Heartbeat::new(&transport, &ip, self.config.hb_port);
-        let hb_ctx = ctx.clone();
-        threads.push(thread::spawn(move || hb.listen(hb_ctx)));
+        let ctx = Arc::new(Mutex::new(RefCell::new(Context::new())));
 
-        // Control is the same as shell
-        let ctrl = Shell::new(&transport, &ip, tx.clone(), Ports::from(&self.config));
-        let ctrl_ctx = ctx.clone();
-        threads.push(thread::spawn(move || ctrl.listen(ctrl_ctx)));
+        let hb = Heartbeat::new(&self.config.transport, &self.config.ip, self.config.hb_port);
+        let shell = Shell::new(&self.config.transport, &self.config.ip, self.config.shell_port);
+        let control = Control::new(&self.config.transport, &self.config.ip,
+                self.config.control_port);
+        let stdin = Stdin::new(&self.config.transport, &self.config.ip,
+                self.config.stdin_port);
+        let iopub = Iopub::new(&self.config.transport, &self.config.ip,
+                self.config.iopub_port);
 
-        let shell = Shell::new(&transport, &ip, tx.clone(), Ports::from(&self.config));
-        let shell_ctx = ctx.clone();
-        threads.push(thread::spawn(move || shell.listen(shell_ctx)));
+        handle.spawn(shell.listen(&handle, ctx.clone()));
+        handle.spawn(hb.listen(&handle, ctx.clone()));
+        handle.spawn(control.listen(&handle, ctx.clone()));
+        handle.spawn(stdin.listen(&handle, ctx.clone()));
+        handle.spawn(iopub.listen(&handle, ctx.clone()));
 
-        let iopub = Iopub::new(&transport, &ip, rx, self.config.iopub_port);
-        let iopub_ctx = ctx.clone();
-        threads.push(thread::spawn(move || iopub.listen(iopub_ctx)));
-
-        for thread in threads {
-            let _ = thread.join();
+        loop {
+            l.turn(None);
         }
         Ok(())
     }

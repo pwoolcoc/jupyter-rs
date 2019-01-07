@@ -4,7 +4,7 @@
 //! Jupyter Kernel for Rust
 //!
 //! This crate implements a kernel backend for the jupyter
-//! notebook system (http:/jupyter.org).
+//! notebook system (http://jupyter.org).
 
 #[macro_use] extern crate nom;
 #[macro_use] extern crate log;
